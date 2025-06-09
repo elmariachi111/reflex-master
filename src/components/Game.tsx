@@ -94,7 +94,7 @@ const Game: React.FC = () => {
     // If dialog is open, send the results
     if (isDialogOpen && dialogWindow) {
       const message: DialogMessage = {
-        type: 'PING',
+        type: 'SUBMIT_DATA',
         payload: resultsData,
         id: String(messageIdCounter)
       };
