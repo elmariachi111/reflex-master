@@ -1,6 +1,7 @@
 import React from 'react';
 import Game from './components/Game';
 import { Zap } from 'lucide-react';
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <footer className="mt-8 text-center text-gray-500 text-sm">
         <p>Test your reflexes and challenge your friends!</p>
       </footer>
+      <Toaster position="top-right" />
     </div>
   );
 }

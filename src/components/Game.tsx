@@ -4,6 +4,7 @@ import ReactionButton from "./ReactionButton";
 import Stats from "./Stats";
 import Instructions from "./Instructions";
 import { ReactionTime } from "../types/game";
+import toast from "react-hot-toast";
 
 const WELSHARE_WALLET_URL = "http://localhost:3000/wallet-external";
 
@@ -51,7 +52,14 @@ const Game: React.FC = () => {
         case "ERROR":
           errorMessage = message.payload.error || "An unknown error occurred";
           console.error("remote app signals an error:", errorMessage);
-
+          toast.error(errorMessage, {
+            duration: 4000,
+            
+            style: {
+              background: "#f44336",
+              color: "#fff",
+            },
+          });
           break;
         case "DIALOG_READY":
           setIsDialogOpen(true);
@@ -72,7 +80,7 @@ const Game: React.FC = () => {
             uploadResult: uploadResult,
             timestamp: Date.now(),
           */
-         // Clear the results after tracking
+          // Clear the results after tracking
           clearHistory();
           break;
         default:
