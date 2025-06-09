@@ -11,13 +11,10 @@ interface StatsProps {
 const Stats: React.FC<StatsProps> = ({ 
   reactionHistory, 
   onClearHistory, 
-  onTrackResults,
-  isDialogDisabled  // Add this line
 }) => {
   const times = reactionHistory.map(item => item.time);
   const averageTime = calculateAverage(times);
   const bestTime = getBestTime(times);
-  const hasEnoughResults = reactionHistory.length >= 3;
   
   return (
     <div className="w-full max-w-md bg-white rounded-xl shadow-md p-4 mb-4">
@@ -44,22 +41,6 @@ const Stats: React.FC<StatsProps> = ({
           <div className="text-xl font-bold text-blue-600">{formatTime(averageTime)}</div>
         </div>
       </div>
-
-      {/* {hasEnoughResults && ( */}
-        <div className="mt-4">
-          <button
-            onClick={onTrackResults}
-            disabled={isDialogDisabled}  // Add this line
-            className={`w-full py-2 px-4 rounded transition-colors ${
-              isDialogDisabled 
-                ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-green-500 hover:bg-green-600'
-            } text-white`}
-          >
-            Track My Results
-          </button>
-        </div>
-      {/* )} */}
       
       {reactionHistory.length > 0 && (
         <div className="mt-4">
