@@ -6,7 +6,7 @@ import Instructions from "./Instructions";
 import { ReactionTime } from "../types/game";
 import toast from "react-hot-toast";
 
-const WELSHARE_WALLET_URL = "http://localhost:3000/wallet-external";
+const WELSHARE_WALLET_URL = import.meta.env.VITE_HEALTH_WALLET_URL
 
 interface DialogMessage {
   type: string;
@@ -37,7 +37,7 @@ const Game: React.FC = () => {
     clearHistory,
   } = useReactionGame();
 
-  const hasEnoughResultsForSubmission = reactionHistory.length >= 1;
+  const hasEnoughResultsForSubmission = reactionHistory.length >= 3;
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<DialogMessage>) => {
@@ -54,7 +54,7 @@ const Game: React.FC = () => {
           console.error("remote app signals an error:", errorMessage);
           toast.error(errorMessage, {
             duration: 4000,
-            
+
             style: {
               background: "#f44336",
               color: "#fff",
