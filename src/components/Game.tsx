@@ -46,10 +46,12 @@ const Game: React.FC = () => {
       }
 
       const message = event.data;
-
+      let errorMessage = "";
       switch (message.type) {
         case "ERROR":
-          console.error("remote app signals an error:", message);
+          errorMessage = message.payload.error || "An unknown error occurred";
+          console.error("remote app signals an error:", errorMessage);
+
           break;
         case "DIALOG_READY":
           setIsDialogOpen(true);
@@ -70,6 +72,8 @@ const Game: React.FC = () => {
             uploadResult: uploadResult,
             timestamp: Date.now(),
           */
+         // Clear the results after tracking
+          clearHistory();
           break;
         default:
           console.log("Received message from dialog:", message);
@@ -142,9 +146,6 @@ const Game: React.FC = () => {
           ? "Average"
           : "Needs Practice",
     });
-
-    // Clear the results after tracking
-    clearHistory();
   };
 
   return (
