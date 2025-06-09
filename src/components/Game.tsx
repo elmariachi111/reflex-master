@@ -1,10 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useReactionGame } from '../hooks/useReactionGame';
 import ReactionButton from './ReactionButton';
 import Stats from './Stats';
 import Instructions from './Instructions';
 
+const WELSHARE_WALLET_URL = "http://localhost:3000/wallet-external"
+
+interface DialogMessage {
+  type: string;
+  payload?: any;
+  id?: string;
+}
+
 const Game: React.FC = () => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogWindow, setDialogWindow] = useState<Window | null>(null);
+
   const {
     gameState,
     reactionTime,
@@ -13,6 +24,57 @@ const Game: React.FC = () => {
     handleClick,
     clearHistory
   } = useReactionGame();
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent<DialogMessage>) => {
+      // Verify origin for security
+      if (event.origin !== new URL(WELSHARE_WALLET_URL).origin) {
+        return;
+      }
+
+      const message = event.data;
+      
+      switch (message.type) {
+        case 'DIALOG_READY':
+          setIsDialogOpen(true);
+          console.log('Dialog is ready');
+          break;
+          
+        case 'DIALOG_CLOSING':
+          setIsDialogOpen(false);
+          setDialogWindow(null);
+          console.log('Dialog is closing');
+          break;
+          
+        default:
+          console.log('Received message from dialog:', message);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
+
+  const openDialog = useCallback(() => {
+    const width = 800;
+    const height = 600;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const newWindow = window.open(
+      WELSHARE_WALLET_URL,
+      'Welshare Wallet',
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+
+    if (newWindow) {
+      setDialogWindow(newWindow);
+      // Note: We'll set isDialogOpen when we receive DIALOG_READY event
+    }
+  }, []);
 
   const handleTrackResults = () => {
     const times = reactionHistory.map(item => item.time);
@@ -59,6 +121,14 @@ const Game: React.FC = () => {
           onClearHistory={clearHistory}
           onTrackResults={handleTrackResults}
         />
+        
+        <button
+          onClick={openDialog}
+          className="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          Open External Content
+        </button>
+        
         <Instructions />
       </div>
     </div>

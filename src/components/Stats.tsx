@@ -40,7 +40,7 @@ const Stats: React.FC<StatsProps> = ({ reactionHistory, onClearHistory, onTrackR
         </div>
       </div>
 
-      {hasEnoughResults && (
+      {/* {hasEnoughResults && ( */}
         <div className="mt-4">
           <button
             onClick={onTrackResults}
@@ -49,7 +49,7 @@ const Stats: React.FC<StatsProps> = ({ reactionHistory, onClearHistory, onTrackR
             Track My Results
           </button>
         </div>
-      )}
+      {/* )} */}
       
       {reactionHistory.length > 0 && (
         <div className="mt-4">
