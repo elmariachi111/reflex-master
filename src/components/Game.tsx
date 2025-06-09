@@ -15,6 +15,7 @@ interface DialogMessage {
 const Game: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogWindow, setDialogWindow] = useState<Window | null>(null);
+  const [messageIdCounter, setMessageIdCounter] = useState(0);
 
   const {
     gameState,
@@ -90,6 +91,18 @@ const Game: React.FC = () => {
       reactionHistory: reactionHistory
     };
     
+    // If dialog is open, send the results
+    if (isDialogOpen && dialogWindow) {
+      const message: DialogMessage = {
+        type: 'PING',
+        payload: resultsData,
+        id: String(messageIdCounter)
+      };
+      
+      dialogWindow.postMessage(message, WELSHARE_WALLET_URL);
+      setMessageIdCounter(prev => prev + 1);
+    }
+    
     console.log('🎯 Reaction Time Results:', resultsData);
     console.log('📊 Summary:', {
       'Total Attempts': resultsData.totalAttempts,
@@ -120,6 +133,7 @@ const Game: React.FC = () => {
           reactionHistory={reactionHistory} 
           onClearHistory={clearHistory}
           onTrackResults={handleTrackResults}
+          isDialogDisabled={!isDialogOpen}  // Add this line
         />
         
         <button

@@ -1,14 +1,19 @@
 import React from 'react';
-import { ReactionTime } from '../types/game';
-import { formatTime, calculateAverage, getBestTime } from '../utils/gameUtils';
+import { calculateAverage, formatTime, getBestTime } from '../utils/gameUtils';
 
 interface StatsProps {
-  reactionHistory: ReactionTime[];
+  reactionHistory: Array<any>;
   onClearHistory: () => void;
   onTrackResults: () => void;
+  isDialogDisabled: boolean;  // Add this line
 }
 
-const Stats: React.FC<StatsProps> = ({ reactionHistory, onClearHistory, onTrackResults }) => {
+const Stats: React.FC<StatsProps> = ({ 
+  reactionHistory, 
+  onClearHistory, 
+  onTrackResults,
+  isDialogDisabled  // Add this line
+}) => {
   const times = reactionHistory.map(item => item.time);
   const averageTime = calculateAverage(times);
   const bestTime = getBestTime(times);
@@ -44,7 +49,12 @@ const Stats: React.FC<StatsProps> = ({ reactionHistory, onClearHistory, onTrackR
         <div className="mt-4">
           <button
             onClick={onTrackResults}
-            className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+            disabled={isDialogDisabled}  // Add this line
+            className={`w-full py-2 px-4 rounded transition-colors ${
+              isDialogDisabled 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-green-500 hover:bg-green-600'
+            } text-white`}
           >
             Track My Results
           </button>
