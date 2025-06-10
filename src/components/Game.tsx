@@ -27,6 +27,8 @@ const Game: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogWindow, setDialogWindow] = useState<Window | null>(null);
   const [messageIdCounter, setMessageIdCounter] = useState(0);
+  const [isSessionReady, setIsSessionReady] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const {
     gameState,
@@ -52,9 +54,9 @@ const Game: React.FC = () => {
         case "ERROR":
           errorMessage = message.payload.error || "An unknown error occurred";
           console.error("remote app signals an error:", errorMessage);
+          setIsUploading(false);
           toast.error(errorMessage, {
             duration: 4000,
-
             style: {
               background: "#f44336",
               color: "#fff",
@@ -64,6 +66,10 @@ const Game: React.FC = () => {
         case "DIALOG_READY":
           setIsDialogOpen(true);
           console.log("Dialog is ready");
+          break;
+
+        case "SESSION_READY":
+          setIsSessionReady(true);
           break;
 
         case "DIALOG_CLOSING":
@@ -81,6 +87,7 @@ const Game: React.FC = () => {
             timestamp: Date.now(),
           */
           // Clear the results after tracking
+          setIsUploading(false);
           clearHistory();
           break;
         default:
@@ -93,7 +100,7 @@ const Game: React.FC = () => {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, []);
+  }, [clearHistory]);
 
   const openDialog = useCallback(() => {
     const width = 800;
@@ -113,11 +120,15 @@ const Game: React.FC = () => {
     }
   }, []);
 
-  const handleTrackResults = () => {
+  const handleTrackResults = useCallback(() => {
     const times = reactionHistory.map((item) => item.time);
     const averageTime =
       times.reduce((acc, time) => acc + time, 0) / times.length;
     const bestTime = Math.min(...times);
+
+    if (!isSessionReady) {
+      toast("session is not ready, check your health wallet")
+    }
 
     const resultsData: ReactionTimeSubmission = {
       totalAttempts: reactionHistory.length,
@@ -129,17 +140,19 @@ const Game: React.FC = () => {
     };
 
     // If dialog is open, send the results
-    if (isDialogOpen && dialogWindow) {
+    if (isDialogOpen && isSessionReady && dialogWindow) {
       const message: DialogMessage = {
         type: "SUBMIT_DATA",
         payload: resultsData,
         id: String(messageIdCounter),
       };
-
+      
       dialogWindow.postMessage(message, WELSHARE_WALLET_URL);
+      setIsUploading(true);
       setMessageIdCounter((prev) => prev + 1);
     }
 
+    toast.success("your results were uploaded. Check them out at your health profile", {duration: 4000})
     console.log("🎯 Reaction Time Results:", resultsData);
     console.log("📊 Summary:", {
       "Total Attempts": resultsData.totalAttempts,
@@ -154,7 +167,7 @@ const Game: React.FC = () => {
           ? "Average"
           : "Needs Practice",
     });
-  };
+  }, [reactionHistory, isSessionReady, isDialogOpen, dialogWindow, messageIdCounter]);
 
   return (
     <div className="w-full max-w-md flex flex-col items-center">
@@ -182,14 +195,14 @@ const Game: React.FC = () => {
             (isDialogOpen ? (
               <button
                 onClick={handleTrackResults}
-                disabled={!isDialogOpen} // Add this line
+                disabled={!isDialogOpen || !isSessionReady || isUploading} // Add this line
                 className={`w-full py-2 px-4 rounded transition-colors ${
                   !isDialogOpen
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-green-500 hover:bg-green-600"
                 } text-white`}
               >
-                Track My Results
+                {isSessionReady ? "Track My Results" : "Create session key in wallet"}
               </button>
             ) : (
               <div className="p-[3px] bg-gradient-to-br from-[#0198ff]/80 to-[#16ffef]/80 rounded-lg">
