@@ -1,36 +1,39 @@
-import { Clock, Loader2, Target, Trophy, User } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-import { Controller, LeaderboardData } from '../types/game';
+import { Clock, Loader2, Target, Trophy, User } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Controller, LeaderboardData } from "../types/game";
+import { toAddress, truncateEthAddress } from "../utils/dids";
 
 interface LeaderboardProps {
   onBack: () => void;
 }
 
-const API_URL = `${import.meta.env.VITE_HEALTH_WALLET_BASE_URL}/api/query/reflex`
+const API_URL = `${
+  import.meta.env.VITE_HEALTH_WALLET_BASE_URL
+}/api/query/reflex`;
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
-  const [data, setData] = useState<LeaderboardData | null>(null);
+  const [data, setData] = useState<LeaderboardData>();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string>();
 
   useEffect(() => {
     const fetchLeaderboardData = async () => {
       try {
         setLoading(true);
-        setError(null);
-        
+        setError(undefined);
+
         // Replace with your actual API endpoint
         const response = await fetch(API_URL);
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch leaderboard data');
+          throw new Error("Failed to fetch leaderboard data");
         }
-        
+
         const leaderboardData: LeaderboardData = await response.json();
         setData(leaderboardData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        console.error('Error fetching leaderboard data:', err);
+        setError(err instanceof Error ? err.message : "An error occurred");
+        console.error("Error fetching leaderboard data:", err);
       } finally {
         setLoading(false);
       }
@@ -41,14 +44,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
 
   const formatTime = (time: number) => {
     return `${time}ms`;
-  };
-
-  const formatDID = (did: string) => {
-    // Display first 6 and last 4 characters for readability
-    if (did.length > 20) {
-      return `${did.slice(0, 6)}...${did.slice(-4)}`;
-    }
-    return did;
   };
 
   const getRankIcon = (index: number) => {
@@ -79,7 +74,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
             Back to Game
           </button>
         </div>
-        
+
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
           <span className="ml-2 text-gray-600">Loading leaderboard...</span>
@@ -103,7 +98,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
             Back to Game
           </button>
         </div>
-        
+
         <div className="text-center py-12">
           <div className="text-red-500 mb-2">Error loading leaderboard</div>
           <div className="text-gray-600">{error}</div>
@@ -127,7 +122,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
             Back to Game
           </button>
         </div>
-        
+
         <div className="text-center py-12">
           <div className="text-gray-600">No data available</div>
         </div>
@@ -160,7 +155,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
         </div>
         {aggregated.fastestController && (
           <div className="mt-2 text-sm text-blue-600">
-            Fastest Overall: {formatDID(aggregated.fastestController.controller_did)} - {formatTime(aggregated.fastestController.fastestReactionTime)}
+            Fastest Overall:{" "}
+            {truncateEthAddress(
+              toAddress(aggregated.fastestController.controller_did)
+            )}{" "}
+            - {formatTime(aggregated.fastestController.fastestReactionTime)}
           </div>
         )}
       </div>
@@ -169,8 +168,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b-2 border-gray-200">
-              <th className="text-left p-3 font-semibold text-gray-700">Rank</th>
-              <th className="text-left p-3 font-semibold text-gray-700">Controller</th>
+              <th className="text-left p-3 font-semibold text-gray-700">
+                Rank
+              </th>
+              <th className="text-left p-3 font-semibold text-gray-700">
+                Controller
+              </th>
               <th className="text-center p-3 font-semibold text-gray-700">
                 <div className="flex items-center justify-center gap-1">
                   <Target className="h-4 w-4" />
@@ -196,7 +199,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
               <tr
                 key={controller.controller_did}
                 className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
-                  index < 3 ? 'bg-gradient-to-r from-yellow-50 to-transparent' : ''
+                  index < 3
+                    ? "bg-gradient-to-r from-yellow-50 to-transparent"
+                    : ""
                 }`}
               >
                 <td className="p-3">
@@ -207,13 +212,18 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
                 <td className="p-3">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-gray-400" />
-                    <span className="font-mono text-sm" title={controller.controller_did}>
-                      {formatDID(controller.controller_did)}
+                    <span
+                      className="font-mono text-sm"
+                      title={controller.controller_did}
+                    >
+                      {truncateEthAddress(toAddress(controller.controller_did), 6,6)}
                     </span>
                   </div>
                 </td>
                 <td className="p-3 text-center">
-                  <span className="font-medium">{controller.totalAttempts}</span>
+                  <span className="font-medium">
+                    {controller.totalAttempts}
+                  </span>
                 </td>
                 <td className="p-3 text-center">
                   <span className="font-medium text-blue-600">
@@ -240,4 +250,4 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
   );
 };
 
-export default Leaderboard; 
+export default Leaderboard;
