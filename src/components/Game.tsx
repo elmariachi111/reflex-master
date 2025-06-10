@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useReactionGame } from "../hooks/useReactionGame";
+import { ReactionTime } from "../types/game";
+import Instructions from "./Instructions";
 import ReactionButton from "./ReactionButton";
 import Stats from "./Stats";
-import Instructions from "./Instructions";
-import { ReactionTime } from "../types/game";
-import toast from "react-hot-toast";
 
-const WELSHARE_WALLET_URL = import.meta.env.VITE_HEALTH_WALLET_URL
+const WELSHARE_WALLET_URL = `${import.meta.env.VITE_HEALTH_WALLET_BASE_URL}/wallet-external`
 
 interface DialogMessage {
   type: string;
