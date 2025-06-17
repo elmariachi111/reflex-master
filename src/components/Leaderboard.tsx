@@ -30,6 +30,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
         }
 
         const leaderboardData: LeaderboardData = await response.json();
+        console.log(leaderboardData);
         setData(leaderboardData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -157,7 +158,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
           <div className="mt-2 text-sm text-blue-600">
             Fastest Overall:{" "}
             {truncateEthAddress(
-              toAddress(aggregated.fastestController.controller_did)
+              toAddress(aggregated.fastestController.controllerDID)
             )}{" "}
             - {formatTime(aggregated.fastestController.fastestReactionTime)}
           </div>
@@ -197,7 +198,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
           <tbody>
             {topControllers.map((controller: Controller, index: number) => (
               <tr
-                key={controller.controller_did}
+                key={controller.controllerDID}
                 className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
                   index < 3
                     ? "bg-gradient-to-r from-yellow-50 to-transparent"
@@ -214,9 +215,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
                     <User className="h-4 w-4 text-gray-400" />
                     <span
                       className="font-mono text-sm"
-                      title={controller.controller_did}
+                      title={controller.controllerDID}
                     >
-                      {truncateEthAddress(toAddress(controller.controller_did), 6,6)}
+                      {truncateEthAddress(toAddress(controller.controllerDID), 6,6)}
                     </span>
                   </div>
                 </td>
