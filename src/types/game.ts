@@ -7,7 +7,7 @@ export interface ReactionTime {
 }
 
 export interface Controller {
-  controller_did: string;
+  controllerDID: string;
   totalAttempts: number;
   averageTime: number;
   bestTime: number;
@@ -17,7 +17,7 @@ export interface Controller {
 }
 
 export interface FastestController {
-  controller_did: string;
+  controllerDID: string;
   fastestReactionTime: number;
 }
 
