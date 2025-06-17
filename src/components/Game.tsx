@@ -19,7 +19,7 @@ interface ReactionTimeSubmission {
   averageTime: number;
   bestTime: number;
   allTimes: number[];
-  timestamp: string;
+  timestamp: number; //unix time
   reactionHistory: ReactionTime[];
 }
 
@@ -135,7 +135,7 @@ const Game: React.FC = () => {
       averageTime: Math.round(averageTime),
       bestTime: bestTime,
       allTimes: times,
-      timestamp: new Date().toISOString(),
+      timestamp: Math.floor(new Date().getTime() / 1000),
       reactionHistory: reactionHistory,
     };
 
