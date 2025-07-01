@@ -10,10 +10,10 @@ export default async function handler(
     response.status(200).json({
       body: "oh hai, this is a test",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
     response.status(500).json({
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
