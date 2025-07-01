@@ -2,11 +2,14 @@ import React, { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useReactionGame } from "../hooks/useReactionGame";
 import { ReactionTime } from "../types/game";
+import { truncateEthAddress } from "../utils/dids";
 import Instructions from "./Instructions";
 import ReactionButton from "./ReactionButton";
 import Stats from "./Stats";
 
-const WELSHARE_WALLET_URL = `${import.meta.env.VITE_HEALTH_WALLET_BASE_URL}/wallet-external`
+const WELSHARE_WALLET_URL = `${
+  import.meta.env.VITE_HEALTH_WALLET_BASE_URL
+}/wallet-external`;
 
 interface DialogMessage {
   type: string;
@@ -23,11 +26,19 @@ interface ReactionTimeSubmission {
   reactionHistory: ReactionTime[];
 }
 
+interface SignedPayload {
+  msgHash: string;
+  serializedSubmission: string;
+  signature: string;
+  recoveryBit: number;
+  timestamp: number;
+}
+
 const Game: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogWindow, setDialogWindow] = useState<Window | null>(null);
   const [messageIdCounter, setMessageIdCounter] = useState(0);
-  const [isSessionReady, setIsSessionReady] = useState(false);
+  const [sessionPubKey, setSessionPubKey] = useState<string>();
   const [isUploading, setIsUploading] = useState(false);
 
   const {
@@ -40,6 +51,20 @@ const Game: React.FC = () => {
   } = useReactionGame();
 
   const hasEnoughResultsForSubmission = reactionHistory.length >= 3;
+
+  const submitDataToWelshare = async (payload: SignedPayload) => {
+    const result = await fetch("/api/submit", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!result.ok) {
+      const errorData = await result.json();
+      throw new Error(`Failed to upload data: ${errorData.error}`);
+    }
+  };
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<DialogMessage>) => {
@@ -69,7 +94,7 @@ const Game: React.FC = () => {
           break;
 
         case "SESSION_READY":
-          setIsSessionReady(true);
+          setSessionPubKey(message.payload.sessionPublicKey);
           break;
 
         case "DIALOG_CLOSING":
@@ -78,17 +103,30 @@ const Game: React.FC = () => {
           console.log("Dialog is closing");
           break;
 
-        case "DATA_RECEIVED":
-          console.log("Data received, verified and uploaded:", message.payload);
+        case "DATA_SIGNED":
+          console.log("Data signed, starting upload:", message.payload);
+
+          submitDataToWelshare(message.payload)
+            .then(() => {
+              toast.success("The results were uploaded.", { duration: 4000 });
+            })
+            .catch((error) => {
+              toast.error(error.message, {
+                duration: 4000,
+              });
+            })
+            .finally(() => {
+              // Clear the results after tracking
+              setIsUploading(false);
+              clearHistory();
+            });
           /*
             hash: toHex(msgHash),
             signature: signatureHex,
             uploadResult: uploadResult,
             timestamp: Date.now(),
           */
-          // Clear the results after tracking
-          setIsUploading(false);
-          clearHistory();
+          
           break;
         default:
           console.log("Received message from dialog:", message);
@@ -126,8 +164,8 @@ const Game: React.FC = () => {
       times.reduce((acc, time) => acc + time, 0) / times.length;
     const bestTime = Math.min(...times);
 
-    if (!isSessionReady) {
-      toast("session is not ready, check your health wallet")
+    if (!sessionPubKey) {
+      toast("session is not ready, check your health wallet");
     }
 
     const resultsData: ReactionTimeSubmission = {
@@ -140,19 +178,18 @@ const Game: React.FC = () => {
     };
 
     // If dialog is open, send the results
-    if (isDialogOpen && isSessionReady && dialogWindow) {
+    if (isDialogOpen && sessionPubKey && dialogWindow) {
       const message: DialogMessage = {
         type: "SUBMIT_DATA",
         payload: resultsData,
         id: String(messageIdCounter),
       };
-      
+
       dialogWindow.postMessage(message, WELSHARE_WALLET_URL);
       setIsUploading(true);
       setMessageIdCounter((prev) => prev + 1);
     }
-
-    toast.success("your results were uploaded. Check them out at your health profile", {duration: 4000})
+    toast.loading("We're uploading your results now.", { duration: 4000 });
     console.log("🎯 Reaction Time Results:", resultsData);
     console.log("📊 Summary:", {
       "Total Attempts": resultsData.totalAttempts,
@@ -167,7 +204,13 @@ const Game: React.FC = () => {
           ? "Average"
           : "Needs Practice",
     });
-  }, [reactionHistory, isSessionReady, isDialogOpen, dialogWindow, messageIdCounter]);
+  }, [
+    reactionHistory,
+    sessionPubKey,
+    isDialogOpen,
+    dialogWindow,
+    messageIdCounter,
+  ]);
 
   return (
     <div className="w-full max-w-md flex flex-col items-center">
@@ -193,17 +236,26 @@ const Game: React.FC = () => {
         <div className="mt-4">
           {hasEnoughResultsForSubmission &&
             (isDialogOpen ? (
-              <button
-                onClick={handleTrackResults}
-                disabled={!isDialogOpen || !isSessionReady || isUploading} // Add this line
-                className={`w-full py-2 px-4 rounded transition-colors ${
-                  !isDialogOpen
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-green-500 hover:bg-green-600"
-                } text-white`}
-              >
-                {isSessionReady ? "Track My Results" : "Create session key in wallet"}
-              </button>
+              <div className="flex flex-col items-center">
+                <button
+                  onClick={handleTrackResults}
+                  disabled={!isDialogOpen || !sessionPubKey || isUploading} // Add this line
+                  className={`w-full py-2 px-4 rounded transition-colors ${
+                    !isDialogOpen
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-green-500 hover:bg-green-600"
+                  } text-white`}
+                >
+                  {sessionPubKey
+                    ? `Track My Results`
+                    : "Create session key in wallet"}
+                </button>
+                {sessionPubKey && (
+                  <span className="text-sm text-gray-500">
+                    {truncateEthAddress(sessionPubKey)}
+                  </span>
+                )}
+              </div>
             ) : (
               <div className="p-[3px] bg-gradient-to-br from-[#0198ff]/80 to-[#16ffef]/80 rounded-lg">
                 <button
