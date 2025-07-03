@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "vercel-dev-helper": "vite --port $PORT",
     "vdev": "vercel dev --listen 0.0.0.0:3009 --local-config ./vercel-dev.json",
-    "prevdev": "ln -s _api api"
+    "prevdev": "ln -sF _api api"
   },
   "dependencies": {
     "@vercel/node": "^5.3.0",
