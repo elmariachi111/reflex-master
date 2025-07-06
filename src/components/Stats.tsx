@@ -17,7 +17,7 @@ const Stats: React.FC<StatsProps> = ({
   const bestTime = getBestTime(times);
   
   return (
-    <div className="w-full max-w-md bg-white rounded-xl shadow-md p-4 mb-4">
+    <div className="w-full bg-white rounded-xl shadow-md p-4 mb-4">
       <div className="flex justify-between items-center mb-3">
         <h2 className="text-xl font-semibold text-gray-800">Stats</h2>
         {reactionHistory.length > 0 && (

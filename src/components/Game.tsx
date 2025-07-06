@@ -213,9 +213,9 @@ const Game: React.FC = () => {
   ]);
 
   return (
-    <div className="w-full max-w-md flex flex-col items-center">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">
-        Reaction Time Test
+    <div className="w-full max-w-lg flex flex-col items-center">
+      <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+        Put your Reaction Time to the Test!
       </h1>
 
       <ReactionButton

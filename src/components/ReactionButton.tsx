@@ -72,7 +72,7 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
   };
   
   return (
-    <div className="relative w-full max-w-96 h-40 md:h-64">
+    <div className="relative w-full h-32 md:h-52">
       <button
         onClick={onClick}
         disabled={false}
@@ -85,8 +85,8 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
           -translate-x-1/2 
           -translate-y-1/2
           rounded-xl 
-          w-3/4
-          h-3/4
+          w-3/5
+          h-3/5
           text-lg 
           md:text-xl 
           font-semibold 
@@ -104,6 +104,7 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
               calc(-50% + ${position.x}px), 
               calc(-50% + ${position.y}px)
             )
+            ${gameState === 'ready' ? 'scale(0.5)' : 'scale(1)'}
           `
         }}
       >

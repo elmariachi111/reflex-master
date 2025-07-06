@@ -63,17 +63,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
   if (loading) {
     return (
       <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <Trophy className="h-6 w-6 text-yellow-500" />
             Leaderboard
           </h2>
-          <button
-            onClick={onBack}
-            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            Back to Game
-          </button>
         </div>
 
         <div className="flex justify-center items-center py-12">
@@ -87,17 +81,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
   if (error) {
     return (
       <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <Trophy className="h-6 w-6 text-yellow-500" />
             Leaderboard
           </h2>
-          <button
-            onClick={onBack}
-            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            Back to Game
-          </button>
         </div>
 
         <div className="text-center py-12">
@@ -111,17 +99,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
   if (!data || !data.aggregated) {
     return (
       <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <Trophy className="h-6 w-6 text-yellow-500" />
             Leaderboard
           </h2>
-          <button
-            onClick={onBack}
-            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            Back to Game
-          </button>
         </div>
 
         <div className="text-center py-12">
@@ -136,17 +118,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           <Trophy className="h-6 w-6 text-yellow-500" />
           Leaderboard
         </h2>
-        <button
-          onClick={onBack}
-          className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-        >
-          Back to Game
-        </button>
       </div>
 
       <div className="mb-4 p-4 bg-blue-50 rounded-lg">
