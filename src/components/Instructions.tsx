@@ -2,7 +2,7 @@ import React from 'react';
 
 const Instructions: React.FC = () => {
   return (
-    <div className="w-full max-w-md bg-white rounded-xl shadow-md p-4 mb-4">
+    <div className="w-full bg-white rounded-xl shadow-md p-4 mb-4">
       <h2 className="text-xl font-semibold text-gray-800 mb-2">How to Play</h2>
       <ol className="list-decimal pl-5 space-y-2 text-gray-700">
         <li>Click the blue button to start</li>
