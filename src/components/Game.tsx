@@ -86,33 +86,14 @@ const Game: React.FC = () => {
         case "DIALOG_CLOSING":
           console.log("Dialog is closing");
           setIsDialogOpen(false);
-          setDialogWindow(null);
           setSessionPubKey(undefined)
           break;
 
-        case "DATA_SIGNED":
-          console.log("Data signed, starting upload:", message.payload);
-
-          // submitDataToWelshare(message.payload)
-          //   .then(() => {
-          //     toast.success("The results were uploaded.", { duration: 4000 });
-          //   })
-          //   .catch((error) => {
-          //     toast.error(error.message, {
-          //       duration: 4000,
-          //     });
-          //   })
-          //   .finally(() => {
-          //     // Clear the results after tracking
-          //     setIsUploading(false);
-          //     clearHistory();
-          //   });
-          /*
-            hash: toHex(msgHash),
-            signature: signatureHex,
-            uploadResult: uploadResult,
-            timestamp: Date.now(),
-          */
+        case "DATA_UPLOADED":
+          console.log("data uploaded", message.payload);
+          setIsUploading(false);
+          toast.success("The results were uploaded.", { duration: 4000 });
+          clearHistory();
 
           break;
         default:
@@ -141,7 +122,6 @@ const Game: React.FC = () => {
 
     if (newWindow) {
       setDialogWindow(newWindow);
-      requestSession(newWindow)
       // Note: We'll set isDialogOpen when we receive DIALOG_READY event
     }
   }, []);
@@ -167,7 +147,8 @@ const Game: React.FC = () => {
         },
       },
     };
-
+    
+    console.log("🎯 Reaction Time Results:", submission);
     // If dialog is open, send the results
     if (isDialogOpen && sessionPubKey && dialogWindow) {
       const message: DialogMessage = {
@@ -176,12 +157,12 @@ const Game: React.FC = () => {
         id: String(messageIdCounter),
       };
 
+      toast.loading("We're uploading your results now.", { duration: 4000 });
       dialogWindow.postMessage(message, WELSHARE_WALLET_URL);
       setIsUploading(true);
       setMessageIdCounter((prev) => prev + 1);
     }
-    toast.loading("We're uploading your results now.", { duration: 4000 });
-    console.log("🎯 Reaction Time Results:", submission);
+    
   }, [
     reactionHistory,
     sessionPubKey,
@@ -217,7 +198,8 @@ const Game: React.FC = () => {
               <div className="flex flex-col items-center">
                 <button
                   onClick={handleTrackResults}
-                  disabled={!isDialogOpen || !sessionPubKey || isUploading} // Add this line
+                  
+                  disabled={!isDialogOpen || !sessionPubKey || isUploading} 
                   className={`w-full py-2 px-4 rounded transition-colors ${
                     !isDialogOpen
                       ? "bg-gray-400 cursor-not-allowed"
