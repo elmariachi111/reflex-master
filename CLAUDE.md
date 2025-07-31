@@ -57,8 +57,7 @@ Due to Vercel's handling of serverless functions, the project uses:
 - Use `npm run vdev` for local development with API routes
 
 ### Environment Variables
-- `VITE_WELSHARE_WALLET_API_TOKEN`: Authentication token for Welshare API
-- `VITE_HEALTH_WALLET_BASE_URL`: Base URL for health wallet service
+
 
 ### Game Logic
 - Random delays between 2-6 seconds for reaction testing

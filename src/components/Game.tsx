@@ -11,6 +11,8 @@ const WELSHARE_WALLET_URL = `${
   import.meta.env.VITE_HEALTH_WALLET_BASE_URL
 }/wallet-external`;
 
+const WELSHARE_APPLICATION_ID = import.meta.env.VITE_HEALTH_APP_ID;
+
 interface DialogMessage {
   type: string;
   payload?: any;
@@ -18,20 +20,17 @@ interface DialogMessage {
 }
 
 interface ReactionTimeSubmission {
-  totalAttempts: number;
-  averageTime: number;
-  bestTime: number;
-  allTimes: number[];
-  timestamp: number; //unix time
-  reactionHistory: ReactionTime[];
+  attempts: ReactionTime[];
+  stats: {
+    averageTime: number;
+    bestTime: number;
+  };
 }
 
-interface SignedPayload {
-  msgHash: string;
-  serializedSubmission: string;
-  signature: string;
-  recoveryBit: number;
-  timestamp: number;
+interface SubmissionPayload<T> {
+  applicationId: string;
+  timestamp: Date;
+  submission: T;
 }
 
 const Game: React.FC = () => {
@@ -51,20 +50,6 @@ const Game: React.FC = () => {
   } = useReactionGame();
 
   const hasEnoughResultsForSubmission = reactionHistory.length >= 3;
-
-  const submitDataToWelshare = async (payload: SignedPayload) => {
-    const result = await fetch("/api/submit", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-    if (!result.ok) {
-      const errorData = await result.json();
-      throw new Error(`Failed to upload data: ${errorData.error}`);
-    }
-  };
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<DialogMessage>) => {
@@ -94,39 +79,22 @@ const Game: React.FC = () => {
           break;
 
         case "SESSION_READY":
-          setSessionPubKey(message.payload.sessionPublicKey);
+          console.log("Session ready", message.payload);
+          setSessionPubKey(message.payload.sessionPublicKey || undefined);
           break;
 
         case "DIALOG_CLOSING":
-          setIsDialogOpen(false);
-          setDialogWindow(null);
           console.log("Dialog is closing");
+          setIsDialogOpen(false);
+          setSessionPubKey(undefined)
           break;
 
-        case "DATA_SIGNED":
-          console.log("Data signed, starting upload:", message.payload);
+        case "DATA_UPLOADED":
+          console.log("data uploaded", message.payload);
+          setIsUploading(false);
+          toast.success("The results were uploaded.", { duration: 4000 });
+          clearHistory();
 
-          submitDataToWelshare(message.payload)
-            .then(() => {
-              toast.success("The results were uploaded.", { duration: 4000 });
-            })
-            .catch((error) => {
-              toast.error(error.message, {
-                duration: 4000,
-              });
-            })
-            .finally(() => {
-              // Clear the results after tracking
-              setIsUploading(false);
-              clearHistory();
-            });
-          /*
-            hash: toHex(msgHash),
-            signature: signatureHex,
-            uploadResult: uploadResult,
-            timestamp: Date.now(),
-          */
-          
           break;
         default:
           console.log("Received message from dialog:", message);
@@ -158,7 +126,7 @@ const Game: React.FC = () => {
     }
   }, []);
 
-  const handleTrackResults = useCallback(() => {
+  const handleTrackResults = useCallback(async () => {
     const times = reactionHistory.map((item) => item.time);
     const averageTime =
       times.reduce((acc, time) => acc + time, 0) / times.length;
@@ -168,42 +136,33 @@ const Game: React.FC = () => {
       toast("session is not ready, check your health wallet");
     }
 
-    const resultsData: ReactionTimeSubmission = {
-      totalAttempts: reactionHistory.length,
-      averageTime: Math.round(averageTime),
-      bestTime: bestTime,
-      allTimes: times,
-      timestamp: Math.floor(new Date().getTime() / 1000),
-      reactionHistory: reactionHistory,
+    const submission: SubmissionPayload<ReactionTimeSubmission> = {
+      timestamp: new Date(),
+      applicationId: WELSHARE_APPLICATION_ID,
+      submission: {
+        attempts: reactionHistory,
+        stats: {
+          averageTime: Math.round(averageTime),
+          bestTime: bestTime,
+        },
+      },
     };
-
+    
+    console.log("🎯 Reaction Time Results:", submission);
     // If dialog is open, send the results
     if (isDialogOpen && sessionPubKey && dialogWindow) {
       const message: DialogMessage = {
         type: "SUBMIT_DATA",
-        payload: resultsData,
+        payload: submission,
         id: String(messageIdCounter),
       };
 
+      toast.loading("We're uploading your results now.", { duration: 4000 });
       dialogWindow.postMessage(message, WELSHARE_WALLET_URL);
       setIsUploading(true);
       setMessageIdCounter((prev) => prev + 1);
     }
-    toast.loading("We're uploading your results now.", { duration: 4000 });
-    console.log("🎯 Reaction Time Results:", resultsData);
-    console.log("📊 Summary:", {
-      "Total Attempts": resultsData.totalAttempts,
-      "Average Time": `${resultsData.averageTime}ms`,
-      "Best Time": `${resultsData.bestTime}ms`,
-      "Performance Level":
-        resultsData.averageTime < 250
-          ? "Excellent"
-          : resultsData.averageTime < 350
-          ? "Good"
-          : resultsData.averageTime < 450
-          ? "Average"
-          : "Needs Practice",
-    });
+    
   }, [
     reactionHistory,
     sessionPubKey,
@@ -239,7 +198,8 @@ const Game: React.FC = () => {
               <div className="flex flex-col items-center">
                 <button
                   onClick={handleTrackResults}
-                  disabled={!isDialogOpen || !sessionPubKey || isUploading} // Add this line
+                  
+                  disabled={!isDialogOpen || !sessionPubKey || isUploading} 
                   className={`w-full py-2 px-4 rounded transition-colors ${
                     !isDialogOpen
                       ? "bg-gray-400 cursor-not-allowed"
