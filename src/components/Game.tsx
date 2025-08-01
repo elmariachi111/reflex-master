@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useReactionGame } from "../hooks/useReactionGame";
 import { ReactionTime } from "../types/game";
-import { truncateEthAddress } from "../utils/dids";
+import { truncateDid } from "../utils/dids";
 import Instructions from "./Instructions";
 import ReactionButton from "./ReactionButton";
 import Stats from "./Stats";
@@ -86,7 +86,7 @@ const Game: React.FC = () => {
         case "DIALOG_CLOSING":
           console.log("Dialog is closing");
           setIsDialogOpen(false);
-          setSessionPubKey(undefined)
+          setSessionPubKey(undefined);
           break;
 
         case "DATA_UPLOADED":
@@ -128,12 +128,14 @@ const Game: React.FC = () => {
 
   const handleTrackResults = useCallback(async () => {
     const times = reactionHistory.map((item) => item.time);
-    const averageTime =
-      times.reduce((acc, time) => acc + time, 0) / times.length;
+    const averageTime = Math.round(
+      times.reduce((acc, time) => acc + time, 0) / times.length
+    );
     const bestTime = Math.min(...times);
 
     if (!sessionPubKey) {
       toast("session is not ready, check your health wallet");
+      return;
     }
 
     const submission: SubmissionPayload<ReactionTimeSubmission> = {
@@ -142,15 +144,15 @@ const Game: React.FC = () => {
       submission: {
         attempts: reactionHistory,
         stats: {
-          averageTime: Math.round(averageTime),
-          bestTime: bestTime,
+          averageTime,
+          bestTime,
         },
       },
     };
-    
+
     console.log("🎯 Reaction Time Results:", submission);
-    // If dialog is open, send the results
-    if (isDialogOpen && sessionPubKey && dialogWindow) {
+
+    if (isDialogOpen && dialogWindow) {
       const message: DialogMessage = {
         type: "SUBMIT_DATA",
         payload: submission,
@@ -162,7 +164,6 @@ const Game: React.FC = () => {
       setIsUploading(true);
       setMessageIdCounter((prev) => prev + 1);
     }
-    
   }, [
     reactionHistory,
     sessionPubKey,
@@ -195,26 +196,42 @@ const Game: React.FC = () => {
         <div className="mt-4">
           {hasEnoughResultsForSubmission &&
             (isDialogOpen ? (
-              <div className="flex flex-col items-center">
-                <button
-                  onClick={handleTrackResults}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Connected
+                    </span>
+                  </div>
+                  {sessionPubKey && (
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      {truncateDid(sessionPubKey, 6, 6)}
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-sm text-gray-600">
+                    {sessionPubKey
+                      ? "Your Welshare profile is connected and ready to track your reaction time results."
+                      : "To proceed, switch to the Welshare Wallet window and click the Derive Storage Key button."}
+                  </div>
+
+
+                    <button
+                      onClick={handleTrackResults}
+                      disabled={!isDialogOpen || !sessionPubKey || isUploading}
+                      className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
+                        !isDialogOpen || !sessionPubKey || isUploading
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-green-500 hover:bg-green-600 text-white shadow-sm hover:shadow-md transform hover:scale-[1.02]"
+                      }`}
+                    >
+                      {isUploading ? "Uploading..." : "Upload Results"}
+                    </button>
                   
-                  disabled={!isDialogOpen || !sessionPubKey || isUploading} 
-                  className={`w-full py-2 px-4 rounded transition-colors ${
-                    !isDialogOpen
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-green-500 hover:bg-green-600"
-                  } text-white`}
-                >
-                  {sessionPubKey
-                    ? `Track My Results`
-                    : "Create session key in wallet"}
-                </button>
-                {sessionPubKey && (
-                  <span className="text-sm text-gray-500">
-                    {truncateEthAddress(sessionPubKey)}
-                  </span>
-                )}
+                </div>
               </div>
             ) : (
               <div className="p-[3px] bg-gradient-to-br from-[#0198ff]/80 to-[#16ffef]/80 rounded-lg">

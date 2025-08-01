@@ -14,4 +14,12 @@ const truncateEthAddress = (address: string, front = 4, back = 6) => {
   return truncateString(address, 2 + front, back);
 };
 
-export { toAddress, toEthrDid, truncateEthAddress, truncateString };
+const truncateDid = (did: string, front = 4, back = 6) => {
+  const parts = did.split(":")
+  if (parts.length != 3) return did;
+
+  return parts[0] + ":" + parts[1] + ":" + truncateString(parts[2] || "", front, back)
+}
+
+export { toAddress, toEthrDid, truncateDid, truncateEthAddress, truncateString };
+
