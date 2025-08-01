@@ -7,24 +7,17 @@ export interface ReactionTime {
 }
 
 export interface Controller {
-  controllerDID: string;
-  totalAttempts: number;
-  averageTime: number;
-  bestTime: number;
-  minTimeFromAllTimes: number;
-  allTimes: number[];
-  submissions: number;
-}
-
-export interface FastestController {
-  controllerDID: string;
-  fastestReactionTime: number;
+  _id: string;
+  total_attempts: number;
+  average_reaction_time: number;
+  best_time: number;
+  weighted_score: number;
+  consistency_bonus: number;
+  final_score: number;
 }
 
 export interface LeaderboardData {
-  aggregated: {
-    totalRecords: number;
-    allControllers: Controller[];
-    fastestController: FastestController;
-  };
+  message: "success" | "error";
+  error?: string;
+  result: Controller[]
 }

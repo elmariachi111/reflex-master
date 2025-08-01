@@ -1,7 +1,7 @@
 import { Clock, Loader2, Target, Trophy, User } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Controller, LeaderboardData } from "../types/game";
-import { toAddress, truncateEthAddress } from "../utils/dids";
+import { truncateDid } from "../utils/dids";
 
 interface LeaderboardProps {
   onBack: () => void;
@@ -9,7 +9,7 @@ interface LeaderboardProps {
 
 const API_URL = `${
   import.meta.env.VITE_HEALTH_WALLET_BASE_URL
-}/api/query/reflex`;
+}/api/query/reflex/leaderboard`;
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
   const [data, setData] = useState<LeaderboardData>();
@@ -96,7 +96,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
     );
   }
 
-  if (!data || !data.aggregated) {
+  if (!data || data.error || !data.result) {
     return (
       <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
         <div className="mb-6">
@@ -113,9 +113,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
     );
   }
 
-  const { aggregated } = data;
-  const topControllers = aggregated.allControllers.slice(0, 50);
-
+  const { result: aggregated } = data;
+  const topControllers = aggregated.slice(0, 50);
+  const fastestController = aggregated[0];
   return (
     <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
       <div className="mb-6">
@@ -128,15 +128,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
       <div className="mb-4 p-4 bg-blue-50 rounded-lg">
         <div className="flex items-center gap-2 text-blue-800 font-medium">
           <Trophy className="h-4 w-4" />
-          Total Records: {aggregated.totalRecords}
+          Total Records: {aggregated.length}
         </div>
-        {aggregated.fastestController && (
+        {fastestController && (
           <div className="mt-2 text-sm text-blue-600">
-            Fastest Overall:{" "}
-            {truncateEthAddress(
-              toAddress(aggregated.fastestController.controllerDID)
-            )}{" "}
-            - {formatTime(aggregated.fastestController.fastestReactionTime)}
+            Fastest Overall: {truncateDid(fastestController._id)} -{" "}
+            {formatTime(fastestController.best_time)}
           </div>
         )}
       </div>
@@ -174,7 +171,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
           <tbody>
             {topControllers.map((controller: Controller, index: number) => (
               <tr
-                key={controller.controllerDID}
+                key={controller._id}
                 className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
                   index < 3
                     ? "bg-gradient-to-r from-yellow-50 to-transparent"
@@ -189,27 +186,24 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
                 <td className="p-3">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-gray-400" />
-                    <span
-                      className="font-mono text-sm"
-                      title={controller.controllerDID}
-                    >
-                      {truncateEthAddress(toAddress(controller.controllerDID), 6,6)}
+                    <span className="font-mono text-sm" title={controller._id}>
+                      {truncateDid(controller._id, 6, 6)}
                     </span>
                   </div>
                 </td>
                 <td className="p-3 text-center">
                   <span className="font-medium">
-                    {controller.totalAttempts}
+                    {controller.total_attempts}
                   </span>
                 </td>
                 <td className="p-3 text-center">
                   <span className="font-medium text-blue-600">
-                    {formatTime(controller.averageTime)}
+                    {formatTime(controller.average_reaction_time)}
                   </span>
                 </td>
                 <td className="p-3 text-center">
                   <span className="font-bold text-green-600">
-                    {formatTime(controller.bestTime)}
+                    {formatTime(controller.best_time)}
                   </span>
                 </td>
               </tr>
