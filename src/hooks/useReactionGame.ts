@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { GameState, ReactionTime } from '../types/game';
 import { generateRandomDelay } from '../utils/gameUtils';
 
@@ -54,7 +54,7 @@ export function useReactionGame() {
         const newReactionTime: ReactionTime = {
           id: Date.now().toString(),
           time: elapsed,
-          timestamp: new Date()
+          timestamp: new Date().toISOString()
         };
         
         setReactionHistory(prev => [newReactionTime, ...prev].slice(0, 10));
