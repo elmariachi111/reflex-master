@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@welshare/react': link:../../../../Library/pnpm/global/5/node_modules/@welshare/react
-
 importers:
 
   .:
@@ -15,8 +12,8 @@ importers:
         specifier: ^5.3.15
         version: 5.3.15(rollup@4.44.1)
       '@welshare/react':
-        specifier: link:../../../../Library/pnpm/global/5/node_modules/@welshare/react
-        version: link:../../../../Library/pnpm/global/5/node_modules/@welshare/react
+        specifier: 0.0.1-alpha.1
+        version: 0.0.1-alpha.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       lucide-react:
         specifier: ^0.542.0
         version: 0.542.0(react@19.1.1)
@@ -923,6 +920,13 @@ packages:
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0-beta.0
+
+  '@welshare/react@0.0.1-alpha.1':
+    resolution: {integrity: sha512-Q2MPLPYkIAm1FV/xNJPTL+8NO6AQe6bnBZkgHmZ8mq4mFpTwlPSSOTqEKxufQJME4II1dW9Cl/ekW8B4t4uaSA==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      react: ^19
+      react-dom: ^19
 
   abbrev@3.0.1:
     resolution: {integrity: sha512-AO2ac6pjRB3SJmGJo+v5/aK6Omggp6fsLrs6wN9bd35ulu4cCwaAU9+7ZhXjeqHVkaHThLuzH0nZr0YpCDhygg==}
@@ -3269,6 +3273,11 @@ snapshots:
       vite: 6.3.5(@types/node@16.18.11)(jiti@1.21.7)(yaml@2.8.0)
     transitivePeerDependencies:
       - supports-color
+
+  '@welshare/react@0.0.1-alpha.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+    dependencies:
+      react: 19.1.1
+      react-dom: 19.1.1(react@19.1.1)
 
   abbrev@3.0.1: {}
 
