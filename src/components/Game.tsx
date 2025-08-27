@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { ConnectWelshareButton, Schemas, useWelshare } from "@welshare/react";
+import React, { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { useReactionGame } from "../hooks/useReactionGame";
 import { ReactionTime } from "../types/game";
@@ -6,18 +7,6 @@ import { truncateDid } from "../utils/dids";
 import Instructions from "./Instructions";
 import ReactionButton from "./ReactionButton";
 import Stats from "./Stats";
-
-const WELSHARE_WALLET_URL = `${
-  import.meta.env.VITE_HEALTH_WALLET_BASE_URL
-}/wallet-external`;
-
-const WELSHARE_APPLICATION_ID = import.meta.env.VITE_HEALTH_APP_ID;
-
-interface DialogMessage {
-  type: string;
-  payload?: any;
-  id?: string;
-}
 
 interface ReactionTimeSubmission {
   attempts: ReactionTime[];
@@ -27,18 +16,28 @@ interface ReactionTimeSubmission {
   };
 }
 
-interface SubmissionPayload<T> {
-  applicationId: string;
-  timestamp: Date;
-  submission: T;
-}
-
 const Game: React.FC = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogWindow, setDialogWindow] = useState<Window | null>(null);
-  const [messageIdCounter, setMessageIdCounter] = useState(0);
-  const [sessionPubKey, setSessionPubKey] = useState<string>();
   const [isUploading, setIsUploading] = useState(false);
+
+  const { openWallet, submitData, isDialogOpen, storageKey } =
+    useWelshare({
+      applicationId: import.meta.env.VITE_HEALTH_APP_ID,
+      apiBaseUrl: import.meta.env.VITE_HEALTH_WALLET_BASE_URL,
+      environment: "development", //optional, at the moment the environment is always development
+      callbacks: {
+        onUploaded: (payload: unknown) => {
+          console.log("Data uploaded:", payload);
+          setIsUploading(false);
+          clearHistory();
+        },
+        onError: (error: unknown) => {
+          console.error("Error:", error);
+          setIsUploading(false);
+        },
+        onSessionReady: (storageKey: unknown) =>
+          console.log("Session ready:", storageKey),
+      },
+    });
 
   const {
     gameState,
@@ -51,81 +50,6 @@ const Game: React.FC = () => {
 
   const hasEnoughResultsForSubmission = reactionHistory.length >= 3;
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent<DialogMessage>) => {
-      // Verify origin for security
-      if (event.origin !== new URL(WELSHARE_WALLET_URL).origin) {
-        return;
-      }
-
-      const message = event.data;
-      let errorMessage = "";
-      switch (message.type) {
-        case "ERROR":
-          errorMessage = message.payload.error || "An unknown error occurred";
-          console.error("remote app signals an error:", errorMessage);
-          setIsUploading(false);
-          toast.error(errorMessage, {
-            duration: 4000,
-            style: {
-              background: "#f44336",
-              color: "#fff",
-            },
-          });
-          break;
-        case "DIALOG_READY":
-          setIsDialogOpen(true);
-          console.log("Dialog is ready");
-          break;
-
-        case "SESSION_READY":
-          console.log("Session ready", message.payload);
-          setSessionPubKey(message.payload.sessionPublicKey || undefined);
-          break;
-
-        case "DIALOG_CLOSING":
-          console.log("Dialog is closing");
-          setIsDialogOpen(false);
-          setSessionPubKey(undefined);
-          break;
-
-        case "DATA_UPLOADED":
-          console.log("data uploaded", message.payload);
-          setIsUploading(false);
-          toast.success("The results were uploaded.", { duration: 4000 });
-          clearHistory();
-
-          break;
-        default:
-          console.log("Received message from dialog:", message);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
-  }, [clearHistory]);
-
-  const openDialog = useCallback(() => {
-    const width = 800;
-    const height = 600;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-
-    const newWindow = window.open(
-      WELSHARE_WALLET_URL,
-      "Welshare Wallet",
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
-
-    if (newWindow) {
-      setDialogWindow(newWindow);
-      // Note: We'll set isDialogOpen when we receive DIALOG_READY event
-    }
-  }, []);
-
   const handleTrackResults = useCallback(async () => {
     const times = reactionHistory.map((item) => item.time);
     const averageTime = Math.round(
@@ -133,44 +57,28 @@ const Game: React.FC = () => {
     );
     const bestTime = Math.min(...times);
 
-    if (!sessionPubKey) {
+    if (!storageKey) {
       toast("session is not ready, check your health wallet");
       return;
     }
 
-    const submission: SubmissionPayload<ReactionTimeSubmission> = {
-      timestamp: new Date(),
-      applicationId: WELSHARE_APPLICATION_ID,
-      submission: {
-        attempts: reactionHistory,
-        stats: {
-          averageTime,
-          bestTime,
-        },
+    //reduce this:
+    const submission: ReactionTimeSubmission = {
+      attempts: reactionHistory,
+      stats: {
+        averageTime,
+        bestTime,
       },
     };
 
     console.log("🎯 Reaction Time Results:", submission);
 
-    if (isDialogOpen && dialogWindow) {
-      const message: DialogMessage = {
-        type: "SUBMIT_DATA",
-        payload: submission,
-        id: String(messageIdCounter),
-      };
-
-      toast.loading("We're uploading your results now.", { duration: 4000 });
-      dialogWindow.postMessage(message, WELSHARE_WALLET_URL);
+    if (isDialogOpen) {
+      submitData(Schemas.ReflexSubmission, submission);
       setIsUploading(true);
-      setMessageIdCounter((prev) => prev + 1);
+      toast.loading("We're uploading your results now.", { duration: 4000 });
     }
-  }, [
-    reactionHistory,
-    sessionPubKey,
-    isDialogOpen,
-    dialogWindow,
-    messageIdCounter,
-  ]);
+  }, [reactionHistory, storageKey, isDialogOpen, submitData]);
 
   return (
     <div className="w-full max-w-lg flex flex-col items-center">
@@ -204,44 +112,37 @@ const Game: React.FC = () => {
                       Connected
                     </span>
                   </div>
-                  {sessionPubKey && (
+                  {storageKey && (
                     <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                      {truncateDid(sessionPubKey, 6, 6)}
+                      {truncateDid(storageKey, 6, 6)}
                     </span>
                   )}
                 </div>
 
                 <div className="space-y-3">
                   <div className="text-sm text-gray-600">
-                    {sessionPubKey
+                    {storageKey
                       ? "Your Welshare profile is connected and ready to track your reaction time results."
                       : "To proceed, switch to the Welshare Wallet window and click the Derive Storage Key button."}
                   </div>
 
-
-                    <button
-                      onClick={handleTrackResults}
-                      disabled={!isDialogOpen || !sessionPubKey || isUploading}
-                      className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
-                        !isDialogOpen || !sessionPubKey || isUploading
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-green-500 hover:bg-green-600 text-white shadow-sm hover:shadow-md transform hover:scale-[1.02]"
-                      }`}
-                    >
-                      {isUploading ? "Uploading..." : "Upload Results"}
-                    </button>
-                  
+                  <button
+                    onClick={handleTrackResults}
+                    disabled={!isDialogOpen || !storageKey || isUploading}
+                    className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
+                      !isDialogOpen || !storageKey || isUploading
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-green-500 hover:bg-green-600 text-white shadow-sm hover:shadow-md transform hover:scale-[1.02]"
+                    }`}
+                  >
+                    {isUploading ? "Uploading..." : "Upload Results"}
+                  </button>
                 </div>
               </div>
             ) : (
-              <div className="p-[3px] bg-gradient-to-br from-[#0198ff]/80 to-[#16ffef]/80 rounded-lg">
-                <button
-                  onClick={openDialog}
-                  className="bg-black text-white px-6 py-3 rounded-lg w-full"
-                >
-                  Connect Welshare Profile
-                </button>
-              </div>
+              <ConnectWelshareButton openWallet={openWallet}>
+                Connect Welshare Profile
+              </ConnectWelshareButton>
             ))}
         </div>
 
